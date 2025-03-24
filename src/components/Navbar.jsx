@@ -6,7 +6,7 @@ const Navbar = () => {
     <nav className={styles.navbar}>
       <NavLink 
         to="/" 
-        className={({ isActive }) => (isActive ? '' : '')}  
+        className={styles.brand}
       >
         Mini <span> Blog</span>
       </NavLink>
