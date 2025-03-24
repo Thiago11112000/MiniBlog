@@ -43,7 +43,7 @@ form{
 label{
   display:flex;
   flex-direction: column;
-  margin-bottom: 1px;
+  margin-bottom: 1em;
 }
 
 label span{
@@ -108,5 +108,5 @@ butto[disabled]{
   border: 1px  solid #F5C6CB ;
   padding: 5px;
   border-radius:  5px;
-  
+
 }
