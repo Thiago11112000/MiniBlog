@@ -8,10 +8,6 @@ import {
 
 import { useState, useEffect } from "react";
 
-// Importe a instância 'app' do seu arquivo de configuração
-// *** Ajuste o caminho se necessário ***
-import { app } from "../firebase/config"; // Assumindo que config.js está em src/firebase/config.js
-
 export const useAuthentication = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(null);
@@ -19,8 +15,7 @@ export const useAuthentication = () => {
   // deal with memory leak
   const [cancelled, setCancelled] = useState(false);
 
-  // Passe a instância 'app' para getAuth
-  const auth = getAuth(app); // <--- CORREÇÃO AQUI
+  const auth = getAuth();
 
   function checkIfIsCancelled() {
     if (cancelled) {
@@ -32,7 +27,6 @@ export const useAuthentication = () => {
     checkIfIsCancelled();
 
     setLoading(true);
-    setError(null); // Limpe o erro antes de tentar criar
 
     try {
       const { user } = await createUserWithEmailAndPassword(
@@ -45,78 +39,69 @@ export const useAuthentication = () => {
         displayName: data.displayName,
       });
 
-      setLoading(false); // Defina loading como false em caso de sucesso
       return user;
     } catch (error) {
-      console.error("Erro ao criar usuário:", error); // Use console.error para erros
       console.log(error.message);
       console.log(typeof error.message);
 
       let systemErrorMessage;
 
-      if (error.code === 'auth/weak-password') { // Use error.code para erros do Firebase Auth
+      if (error.message.includes("Password")) {
         systemErrorMessage = "A senha precisa conter pelo menos 6 caracteres.";
-      } else if (error.code === 'auth/email-already-in-use') {
+      } else if (error.message.includes("email-already")) {
         systemErrorMessage = "E-mail já cadastrado.";
-      } else if (error.code === 'auth/invalid-email') {
-          systemErrorMessage = "O formato do e-mail é inválido.";
       } else {
-        systemErrorMessage = "Ocorreu um erro, por favor tente mais tarde.";
+        systemErrorMessage = "Ocorreu um erro, por favor tenta mais tarde.";
       }
 
       setError(systemErrorMessage);
-      setLoading(false); // Defina loading como false também em caso de erro
     }
 
-    // Removido setLoading(false) daqui, pois já está no try/catch
+    setLoading(false);
   };
 
-  // ... (restante do código logout e login, que parecem ok, mas adicionei setLoading(false) nos catches)
+  const logout = () => {
+    checkIfIsCancelled();
 
-    const logout = () => {
-      checkIfIsCancelled();
-      signOut(auth);
-    };
+    signOut(auth);
+  };
 
-    const login = async (data) => {
-      checkIfIsCancelled();
+  const login = async (data) => {
+    checkIfIsCancelled();
 
-      setLoading(true);
-      setError(null); // Use null ou string vazia para limpar o erro
+    setLoading(true);
+    setError(false);
 
-      try {
-        await signInWithEmailAndPassword(auth, data.email, data.password);
-        setLoading(false); // Mova para dentro do try em caso de sucesso
-      } catch (error) {
-        console.error("Erro ao fazer login:", error); // Use console.error para erros
-        console.log(error.message);
-        console.log(typeof error.message);
-        console.log(error.code); // Verifique error.code
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+    } catch (error) {
+      console.log(error.message);
+      console.log(typeof error.message);
+      console.log(error.message.includes("user-not"));
 
-        let systemErrorMessage;
+      let systemErrorMessage;
 
-        // Use error.code para erros mais específicos do Firebase Auth v9+
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {
-          systemErrorMessage = "Usuário ou senha inválidos."; // Mensagem mais genérica por segurança
-        } else if (error.code === 'auth/wrong-password') {
-           systemErrorMessage = "Usuário ou senha inválidos."; // Mensagem mais genérica por segurança
-        } else {
-          systemErrorMessage = "Ocorreu um erro, por favor tente mais tarde.";
-        }
-
-        console.log(systemErrorMessage);
-        setError(systemErrorMessage);
-        setLoading(false); // Defina loading como false também em caso de erro
+      if (error.message.includes("user-not-found")) {
+        systemErrorMessage = "Usuário não encontrado.";
+      } else if (error.message.includes("wrong-password")) {
+        systemErrorMessage = "Senha incorreta.";
+      } else {
+        systemErrorMessage = "Ocorreu um erro, por favor tenta mais tarde.";
       }
-      // Removido console.log(error) daqui, pois error só existe no catch
-      // Removido setLoading(false) daqui
-    };
 
+      console.log(systemErrorMessage);
+
+      setError(systemErrorMessage);
+    }
+
+    console.log(error);
+
+    setLoading(false);
+  };
 
   useEffect(() => {
-    // Esta função de limpeza será chamada quando o componente que usa o hook for desmontado
     return () => setCancelled(true);
-  }, []); // Array de dependências vazio garante que isso rode apenas na montagem/desmontagem
+  }, []);
 
   return {
     auth,

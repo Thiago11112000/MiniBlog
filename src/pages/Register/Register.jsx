@@ -2,6 +2,7 @@ import styles from "./Register.module.css";
 
 import { useEffect, useState } from "react";
 import { useAuthentication } from "../../hooks/useAuthentication";
+import { signOut } from "firebase/auth";
 
 const Register = () => {
   const [displayName, setDisplayName] = useState("");
@@ -33,11 +34,16 @@ const Register = () => {
     console.log(res);
   };
 
+
+
+
   useEffect(() => {
     if (authError) {
       setError(authError);
     }
   }, [authError]);
+
+
 
   return (
     <div className={styles.register}>
