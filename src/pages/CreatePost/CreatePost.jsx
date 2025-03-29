@@ -2,7 +2,9 @@ import styles from './CreatePost.module.css'
 
 const CreatePost = () => {
   return (
-    <div>CreatePost</div>
+    <div>
+      <h1> CreatePost</h1>
+    </div>
   )
 }
 

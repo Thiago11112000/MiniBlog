@@ -2,7 +2,7 @@ import styles from './Dashboard.module.css';
 const Dashboard = () => {
   return (
     <div>
-        <h1> CreatePost</h1>
+        <h1>    Dashboard   </h1>
     </div>
   )
 }
