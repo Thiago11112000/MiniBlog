@@ -1,10 +1,12 @@
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
   signOut,
 } from "firebase/auth";
+
+
+import { auth } from "../firebase/config"; 
 
 import { useState, useEffect } from "react";
 
@@ -15,7 +17,6 @@ export const useAuthentication = () => {
   // deal with memory leak
   const [cancelled, setCancelled] = useState(false);
 
-  const auth = getAuth();
 
   function checkIfIsCancelled() {
     if (cancelled) {
@@ -23,14 +24,15 @@ export const useAuthentication = () => {
     }
   }
 
+ 
   const createUser = async (data) => {
     checkIfIsCancelled();
-
     setLoading(true);
+    setError(null); 
 
     try {
       const { user } = await createUserWithEmailAndPassword(
-        auth,
+        auth, 
         data.email,
         data.password
       );
@@ -39,10 +41,10 @@ export const useAuthentication = () => {
         displayName: data.displayName,
       });
 
+      setLoading(false); 
       return user;
     } catch (error) {
-      console.log(error.message);
-      console.log(typeof error.message);
+      console.log("Erro createUser:", error.message); 
 
       let systemErrorMessage;
 
@@ -51,52 +53,43 @@ export const useAuthentication = () => {
       } else if (error.message.includes("email-already")) {
         systemErrorMessage = "E-mail já cadastrado.";
       } else {
-        systemErrorMessage = "Ocorreu um erro, por favor tenta mais tarde.";
+        systemErrorMessage = "Ocorreu um erro ao criar o usuário. Tente novamente.";
       }
 
       setError(systemErrorMessage);
+      setLoading(false); 
     }
-
-    setLoading(false);
   };
 
   const logout = () => {
     checkIfIsCancelled();
-
-    signOut(auth);
+    signOut(auth); 
   };
 
   const login = async (data) => {
     checkIfIsCancelled();
-
     setLoading(true);
-    setError(false);
+    setError(null); 
 
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      await signInWithEmailAndPassword(auth, data.email, data.password); 
+      setLoading(false);
     } catch (error) {
-      console.log(error.message);
-      console.log(typeof error.message);
-      console.log(error.message.includes("user-not"));
+      console.log("Erro login:", error.message); 
 
       let systemErrorMessage;
 
-      if (error.message.includes("user-not-found")) {
-        systemErrorMessage = "Usuário não encontrado.";
-      } else if (error.message.includes("wrong-password")) {
+      if (error.message.includes("user-not-found") || error.message.includes("invalid-email")) { // Agrupa erros similares
+        systemErrorMessage = "Usuário não encontrado ou e-mail inválido.";
+      } else if (error.message.includes("wrong-password") || error.message.includes("invalid-credential")) { // Agrupa erros similares (v10+ usa invalid-credential)
         systemErrorMessage = "Senha incorreta.";
       } else {
-        systemErrorMessage = "Ocorreu um erro, por favor tenta mais tarde.";
+        systemErrorMessage = "Ocorreu um erro ao fazer login. Tente novamente.";
       }
 
-      console.log(systemErrorMessage);
-
       setError(systemErrorMessage);
+      setLoading(false); 
     }
-
-    console.log(error);
-
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -104,7 +97,7 @@ export const useAuthentication = () => {
   }, []);
 
   return {
-    auth,
+    auth, 
     createUser,
     error,
     logout,
